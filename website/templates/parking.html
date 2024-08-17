@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Parking{% endblock %}
+{% block content %}
+<style>
+  .parking-lot {
+      max-width: 600px;
+      height: 450px;
+      border: 2px solid black;
+      position: relative;
+      box-sizing: border-box;
+      margin: auto;
+      padding: 0 120px; 
+      display: flex;
+      align-items: flex-start; 
+  }
+
+ .parking-spot {
+    width: calc(60%); 
+    height: calc(40%);
+    border-bottom: 2px solid black;
+    box-sizing: border-box;
+    margin: 0;
+    position: relative;
+    display: flex; 
+    align-items: center;
+    justify-content: center; 
+    text-align: center; 
+    cursor: pointer; /* Change cursor to pointer */
+    text-decoration: none; /* Remove underline */
+    color: inherit; /* Inherit color from parent */
+    background-color: inherit; /* Ensure background color does not change */
+    transition: none; /* Disable transition effects */
+  }
+
+  .parking-spot:hover {
+    text-decoration: none; 
+    color: black;
+  }
+
+  .parking-spot:first-child {
+    border-left: 2px solid black;
+  }
+
+  .parking-spot:not(:last-child) {
+      border-right: 2px solid black;
+  }
+
+  .entrance-exit {
+    width: calc(60%);
+    height: calc(20%);
+    border: 2px solid black;
+    border-bottom: none;  
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .free {
+    background-color: #22DD22;
+  }
+  .occupied {
+    background-color: red;
+  }
+  .reserved {
+    background-color: yellow;
+  }
+</style>
+<br>
+<h1 class="text-center">Smart Parking Status</h1>
+<div class="parking-lot">
+  {% for spot in parking_spots %}
+  <div class="parking-spot {% if spot.state == 1 %}free{% elif spot.state == 2 %}reserved{% elif spot.state == 3 %}occupied{% endif %}">
+    {{ spot.id }}
+  </div>
+
+  {% endfor %}
+
+  <div class="entrance-exit"></div>
+  <br>
+</div>
+
+{% endblock %}

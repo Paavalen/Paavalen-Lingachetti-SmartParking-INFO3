@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}My Reservations{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">My Reservations</h1>
+
+    <!-- Filter Dropdown -->
+    <div class="mb-4">
+        <label for="statusFilter">Filter by Status:</label>
+        <select id="statusFilter" class="form-control" onchange="filterReservations()">
+            <option value="all" {% if request.args.get('status') == 'all' or not request.args.get('status') %}selected{% endif %}>All</option>
+            <option value="active" {% if request.args.get('status') == 'active' or not request.args.get('status') %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+    </div>
+
+    <div class="row" id="reservationsContainer">
+        {% for reservation in reservations %}
+        <div class="col-md-6 mb-4 reservation-card" data-status="{{ reservation.isActive }}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reservation ID: {{ reservation.id }}</h5>
+                    <p class="card-text">
+                        Spot: {{ reservation.spot_id }}<br>
+                        Start Time: {{ reservation.start_time }}<br>
+                        End Time: {{ reservation.end_time }}<br>
+                        Status: 
+                        {% if reservation.isActive == 1 %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Inactive</span>
+                        {% endif %}
+                    </p>
+
+                    {% if reservation.isActive == 1 %}
+                    <button class="btn btn-primary" onclick="showQRCode('{{ reservation.id }}')">Generate QR Code</button>
+                    <a href="{{ url_for('views.cancel_reservation', reservation_id=reservation.id) }}" class="btn btn-danger">Cancel</a>
+                    <button class="btn btn-warning" onclick="openExtendModal('{{ reservation.id }}')">Extend</button>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" role="dialog" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="qrCodeModalLabel">QR Code</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="qrCodeImage" src="" alt="QR Code" />
+      </div>
+      <div class="modal-footer">
+        <a id="downloadQRCode" href="" download="qrcode.png" class="btn btn-primary mr-auto">Download QR Code</a>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Extend Reservation Modal -->
+<div class="modal fade" id="extendReservationModal" tabindex="-1" role="dialog" aria-labelledby="extendReservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="extendReservationModalLabel">Extend Reservation</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="extendForm" method="POST">
+            <div class="form-group">
+                <label for="additional_hours">Additional Hours:</label>
+                <input type="number" class="form-control" id="additional_hours" name="additional_hours" min="0" required>
+            </div>
+            <input type="hidden" id="reservation_id" name="reservation_id">
+            <button type="submit" class="btn btn-primary">Extend</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function showQRCode(reservationId) {
+        fetch(`/generate_qr/${reservationId}`)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('qrCodeImage').src = url;
+                document.getElementById('downloadQRCode').href = url;
+                $('#qrCodeModal').modal('show');
+            });
+    }
+
+    function openExtendModal(reservationId) {
+        document.getElementById('reservation_id').value = reservationId;
+        $('#extendReservationModal').modal('show');
+    }
+
+    function filterReservations() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const reservations = document.querySelectorAll('.reservation-card');
+        
+        reservations.forEach(card => {
+            const status = card.getAttribute('data-status');
+            
+            if (statusFilter === 'all' || (statusFilter === 'active' && status == 1) || (statusFilter === 'inactive' && status == 0)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        filterReservations();
+    });
+</script>
+{% endblock %}

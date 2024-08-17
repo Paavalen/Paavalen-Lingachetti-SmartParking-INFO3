@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Welcome to Smart Parking System</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <h4 class="alert-heading">Smart Parking Made Easy</h4>
+                <p>
+                    Our smart parking system makes finding and reserving a parking spot easier than ever. View real-time availability, reserve a spot, and manage your reservations all in one place.
+                </p>
+                <hr>
+                <p class="mb-0">
+                    Use the navigation bar to access your account, make a reservation, or log in if you haven't already.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for spot in parking_spots %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Spot {{ spot.id }}</h5>
+                    <p class="card-text">
+                        {% if spot.state == 1 %}
+                        <span class="badge bg-success">Available</span>
+                        {% elif spot.state == 2 %}
+                        <span class="badge bg-warning">Reserved</span>
+                        {% elif spot.state == 3 %}
+                        <span class="badge bg-danger">Occupied</span>
+                        {% endif %}
+                    </p>
+                    {% if spot.state == 1 %}
+                    <a href="{{ url_for('views.book') }}" class="btn btn-primary">Reserve Now</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div class="alert alert-success">
+                <h4 class="alert-heading">Why Choose Us?</h4>
+                <p>
+                    Our system uses advanced technology to ensure efficient parking management. Key features include:
+                </p>
+                <ul>
+                    <li>Real-time spot availability updates</li>
+                    <li>Easy reservation and cancellation</li>
+                    <li>Automated spot status updates based on reservation times</li>
+                    <li>Secure and user-friendly interface</li>
+                </ul>
+                <p>
+                    Discover a new way to park with ease. Explore our system and experience the future of parking today!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
