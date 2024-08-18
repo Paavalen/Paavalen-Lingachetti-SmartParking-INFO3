@@ -30,7 +30,7 @@ Run the installation script to install all necessary dependencies:
 ### 5. Setup Arduino
 Install arduino IDE on your Raspberry Pi or on another PC then upload the sketch in the Arduino folder
 
-if you use another pc then unplug the Arduino and plug it into the Raspberry Pi
+if you used another pc, unplug the Arduino and plug it into the Raspberry Pi
 
 ## Running The App
 
