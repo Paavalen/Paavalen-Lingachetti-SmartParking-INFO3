@@ -16,7 +16,7 @@ sudo apt-get install -y python3 python3-pip
 check_exit_status
 
 echo "Installing Python dependencies..."
-pip3 install flask flask-login sqlalchemy pyserial qrcode[pil]
+pip3 install flask Flask-SQLAlchemy flask-login pyserial qrcode[pil]
 check_exit_status
 
 echo "Installing Arduino CLI..."
