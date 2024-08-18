@@ -1,5 +1,0 @@
-flask
-Flask-SQLAlchemy
-flask-login
-pyserial
-qrcode[pil]
