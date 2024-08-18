@@ -14,7 +14,7 @@ git clone https://github.com/Paavalen/Paavalen-Lingachetti-SmartParking-INFO3.gi
 ### 2. Navigate to the Project Directory
 Open a terminal and navigate to the project directory:
 
-### 3. Ensure Script Execution Rights
+### 3. Ensure the Script's Execution Rights
 Ensure the installation script `install.sh` has execution rights:
 
 ```bash
