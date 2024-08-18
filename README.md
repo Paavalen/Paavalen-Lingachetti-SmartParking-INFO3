@@ -1,23 +1,49 @@
 # Smart Parking
 
+The Smart Parking project is designed to streamline parking management using modern technology. By integrating sensors, an Arduino, and a web interface built with Flask, this system allows users to reserve parking spots in real time. The system includes features like dynamic slot availability, QR code generation use for entry pass, and automated control of parking spot indicators.
+
 ## Setup & Installation
 
-Make sure you have the latest version of Python installed.
+### 1. Clone the Repository
+First, clone the repository into your Raspberry Pi:
 
 ```bash
 git clone https://github.com/Paavalen/Paavalen-Lingachetti-SmartParking-INFO3.git
 ```
 
+### 2. Navigate to the Project Directory
+Open a terminal and navigate to the project directory:
+
 ```bash
-pip install -r requirements.txt
+cd Paavalen-Lingachetti-SmartParking-INFO3
+```
+
+### 3. Ensure Script Execution Rights
+Ensure the installation script `install.sh` has execution rights:
+
+```bash
+chmod +x install.sh
+```
+
+### 4. Install Dependencies
+Run the installation script to install all necessary dependencies:
+
+```bash
+./install.sh
 ```
 
 ## Running The App
 
+Once the dependencies are installed, you can start the application:
+
 ```bash
-python main.py
+python3 main.py
 ```
 
 ## Viewing The App
 
-Go to `http://127.0.0.1:5000`
+Open a web browser and go to:
+
+```
+http://127.0.0.1:5000
+```
