@@ -3,3 +3,4 @@ website/__pycache__
 instance/database.db
 tempCodeRunnerFile.py
 tempCodeRunnerFile.html
+website/static/tempCodeRunnerFile.js
