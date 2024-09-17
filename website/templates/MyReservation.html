@@ -6,7 +6,6 @@
 <div class="container mt-4">
     <h1 class="text-center mb-4">My Reservations</h1>
 
-    <!-- Filter Dropdown -->
     <div class="mb-4">
         <label for="statusFilter">Filter by Status:</label>
         <select id="statusFilter" class="form-control" onchange="filterReservations()">
@@ -36,10 +35,13 @@
 
                     {% if reservation.isActive == 1 %}
                     <button class="btn btn-primary" onclick="showQRCode('{{ reservation.id }}')">Generate QR Code</button>
-                    <a href="{{ url_for('views.cancel_reservation', reservation_id=reservation.id) }}" class="btn btn-danger">Cancel</a>
+
+                    <form action="{{ url_for('views.cancel_reservation', reservation_id=reservation.id) }}" method="POST" style="display: inline;">
+                      <button type="submit" class="btn btn-danger">Cancel</button>
+                    </form>
+                    
                     <button class="btn btn-warning" onclick="openExtendModal('{{ reservation.id }}')">Extend</button>
                     {% endif %}
-                    
                 </div>
             </div>
         </div>
@@ -47,7 +49,6 @@
     </div>
 </div>
 
-<!-- QR Code Modal -->
 <div class="modal fade" id="qrCodeModal" tabindex="-1" role="dialog" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -68,7 +69,7 @@
   </div>
 </div>
 
-<!-- Extend Reservation Modal -->
+
 <div class="modal fade" id="extendReservationModal" tabindex="-1" role="dialog" aria-labelledby="extendReservationModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -79,14 +80,14 @@
         </button>
       </div>
       <div class="modal-body">
-        <form id="extendForm" method="POST">
-            <div class="form-group">
-                <label for="additional_hours">Additional Hours:</label>
-                <input type="number" class="form-control" id="additional_hours" name="additional_hours" min="0" required>
-            </div>
-            <input type="hidden" id="reservation_id" name="reservation_id">
-            <button type="submit" class="btn btn-primary">Extend</button>
-        </form>
+        <form id="extendForm" action="{{ url_for('views.extend_reservation') }}" method="POST">
+          <div class="form-group">
+              <label for="additional_hours">Additional Hours:</label>
+              <input type="number" class="form-control" id="additional_hours" name="additional_hours" min="0" required>
+          </div>
+          <input type="hidden" id="reservation_id" name="reservation_id">
+          <button type="submit" class="btn btn-primary">Extend</button>
+      </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -94,6 +95,41 @@
     </div>
   </div>
 </div>
+
+<script>
+    function openExtendModal(reservationId) {
+        document.getElementById('reservation_id').value = reservationId;
+        $('#extendReservationModal').modal('show');
+    }
+
+    document.getElementById('extendForm').addEventListener('submit', function(event) {
+        event.preventDefault(); 
+        const formData = new FormData(this);
+        const reservationId = formData.get('reservation_id');
+        const additionalHours = formData.get('additional_hours');
+
+        fetch('/extend_reservation', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Reservation extended successfully!');
+                location.reload(); 
+            } else {
+                alert(`Failed to extend reservation: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+</script>
 
 <script>
     function showQRCode(reservationId) {

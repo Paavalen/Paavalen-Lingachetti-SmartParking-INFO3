@@ -25,11 +25,11 @@
     align-items: center;
     justify-content: center; 
     text-align: center; 
-    cursor: pointer; /* Change cursor to pointer */
-    text-decoration: none; /* Remove underline */
-    color: inherit; /* Inherit color from parent */
-    background-color: inherit; /* Ensure background color does not change */
-    transition: none; /* Disable transition effects */
+    cursor: pointer; 
+    text-decoration: none; 
+    color: inherit; 
+    background-color: inherit;
+    transition: none;
   }
 
   .parking-spot:hover {
@@ -70,14 +70,47 @@
 <h1 class="text-center">Smart Parking Status</h1>
 <div class="parking-lot">
   {% for spot in parking_spots %}
-  <div class="parking-spot {% if spot.state == 1 %}free{% elif spot.state == 2 %}reserved{% elif spot.state == 3 %}occupied{% endif %}">
+  <div class="parking-spot {% if spot.state == 1 %}free{% elif spot.state == 2 %}reserved{% elif spot.state == 3 %}occupied{% endif %}" data-spot-id="{{ spot.id }}">
     {{ spot.id }}
   </div>
-
   {% endfor %}
 
   <div class="entrance-exit"></div>
   <br>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('.parking-spot').click(function() {
+      var spotId = $(this).data('spot-id');
+      var currentState = $(this).attr('class').split(' ')[1];
+      var newState;
+
+      if (currentState === 'free') {
+        newState = 2; 
+      } else if (currentState === 'reserved') {
+        newState = 3; 
+      } else {
+        newState = 1;
+      }
+
+      $.ajax({
+        url: '/parking',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ spot_id: spotId, state: newState }),
+        success: function(response) {
+          var newClass = (newState === 1) ? 'free' : (newState === 2) ? 'reserved' : 'occupied';
+          $('.parking-spot[data-spot-id="' + spotId + '"]').removeClass('free reserved occupied').addClass(newClass);
+          alert('Parking spot updated successfully!');
+        },
+        error: function(xhr, status, error) {
+          alert('Error updating parking spot: ' + error);
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}

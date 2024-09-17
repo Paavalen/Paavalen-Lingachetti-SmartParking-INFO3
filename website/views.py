@@ -1,20 +1,48 @@
-import qrcode
-import io
-from flask import Blueprint, render_template, redirect, request, flash, url_for, send_file, jsonify
+from flask import Blueprint, render_template, redirect, request, flash, url_for, jsonify, send_file
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import Parking, Reservation, User
 from . import db
 from datetime import datetime, timedelta
-import serial
+import qrcode
+import io
+from . import ser 
 
 views = Blueprint('views', __name__)
 
-SERIAL_PORT = 'COM9'
-BAUD_RATE = 9600
-
-@views.route('/parking', methods=['GET'])
+@views.route('/parking', methods=['GET', 'POST'])
+@login_required
 def parking():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            spot_id = data.get('spot_id')
+            state = data.get('state')
+
+            if spot_id is None or state is None:
+                return jsonify({'error': 'Invalid data'}), 400
+
+            spot = Parking.query.get(spot_id)
+            if spot:
+                spot.state = state
+                db.session.commit()
+
+                if ser and ser.is_open:
+                    if state == 2:  
+                        ser.write(f"reserve:{spot_id}\n".encode())
+                    elif state == 1:  
+                        ser.write(f"free:{spot_id}\n".encode())
+                    elif state == 3:  
+                        ser.write(f"occupied:{spot_id}\n".encode())
+
+                return jsonify({'message': 'Parking spot updated and state sent to Arduino'}), 200
+            else:
+                return jsonify({'error': 'Parking spot not found'}), 404
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
     now = datetime.now().replace(microsecond=0)
     
     reservations = Reservation.query.all()
@@ -22,11 +50,12 @@ def parking():
         spot = Parking.query.get(reservation.spot_id)
         if spot and spot.state == 2 and reservation.isActive == 1 and reservation.end_time < now:
             spot.state = 1  
-            reservation.isActive = 0 
+            reservation.isActive = 0
             db.session.commit()
 
     parking_spots = Parking.query.all()
     return render_template("parking.html", user=current_user, parking_spots=parking_spots)
+
 
 @views.route('/book', methods=['GET', 'POST'])
 @login_required
@@ -59,27 +88,21 @@ def book():
         )
         db.session.add(reservation)
         
-        spot.state = 2  # Reserved
+        spot.state = 2 
         try:
             db.session.commit()
             flash('Reservation successful!', category='success')
             
-            # Update the serial port to COM9
-            with serial.Serial('COM9', 9600, timeout=1) as ser:
-                ser.write(f"reserve:{spot_id}".encode())
-            
             return redirect(url_for('views.parking'))
         except Exception as e:
             db.session.rollback()
-            flash('Reservation failed. Please try again.', category='error')
+            flash('An error occurred. Please try again.', category='error')
 
     return render_template("book.html", user=current_user, parking_spots=Parking.query.all())
-
 
 @views.route('/', methods=['GET'])
 def home():
     return render_template("home.html", user=current_user)
-
 
 @views.route('/account', methods=['GET', 'POST'])
 @login_required
@@ -100,7 +123,7 @@ def account():
 
         if password:
             if password == confirm_password:
-                user.password = generate_password_hash(password, method='pbkdf2:sha256')  # Hash password
+                user.password = generate_password_hash(password, method='pbkdf2:sha256') 
             else:
                 flash('Passwords do not match.', category='error')
                 return redirect(url_for('views.account'))
@@ -116,14 +139,12 @@ def account():
 
     return render_template("account.html", user=user)
 
-# My Reservations page
 @views.route('/my_reservations', methods=['GET'])
 @login_required
 def my_reservations():
     reservations = Reservation.query.filter_by(user_id=current_user.id).order_by(Reservation.start_time.desc()).all()
     return render_template("MyReservation.html", user=current_user, reservations=reservations)
 
-# Generate QR code for reservation
 @views.route('/generate_qr/<int:reservation_id>', methods=['GET'])
 @login_required
 def generate_qr(reservation_id):
@@ -150,30 +171,34 @@ def generate_qr(reservation_id):
     
     return send_file(img_io, mimetype='image/png')
 
-# Extend reservation
 @views.route('/extend_reservation', methods=['POST'])
 @login_required
 def extend_reservation():
-    reservation_id = request.form.get('reservation_id')
-    additional_hours = int(request.form.get('additional_hours', 0))
-    
-    reservation = Reservation.query.get_or_404(reservation_id)
+    try:
+        reservation_id = request.form.get('reservation_id')
+        additional_hours = int(request.form.get('additional_hours', 0))
 
-    if reservation.user_id != current_user.id:
-        return jsonify({'success': False, 'message': 'You do not have permission to extend this reservation.'})
-    
-    if additional_hours > 0:
+        print(f"Received data - Reservation ID: {reservation_id}, Additional Hours: {additional_hours}")
+
+        if additional_hours <= 0:
+            return jsonify({'success': False, 'message': 'Additional hours must be greater than zero.'}), 400
+
+        reservation = Reservation.query.get_or_404(reservation_id)
+
+        if reservation.user_id != current_user.id:
+            return jsonify({'success': False, 'message': 'You do not have permission to extend this reservation.'}), 403
+
         reservation.end_time += timedelta(hours=additional_hours)
-        try:
-            db.session.commit()
-            return jsonify({'success': True})
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'success': False, 'message': 'An error occurred. Please try again.'})
-    else:
-        return jsonify({'success': False, 'message': 'Additional hours must be greater than zero.'})
+        db.session.commit()
 
-# Cancel reservation
+        print("Reservation extended successfully")
+        return jsonify({'success': True, 'message': 'Reservation extended successfully!'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error extending reservation: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while extending the reservation.'}), 500
+
 @views.route('/cancel_reservation/<int:reservation_id>', methods=['GET', 'POST'])
 @login_required
 def cancel_reservation(reservation_id):
@@ -196,7 +221,7 @@ def cancel_reservation(reservation_id):
         
         return redirect(url_for('views.my_reservations'))
     
-    return render_template("cancel_reservation.html", reservation=reservation)
+    return redirect(url_for('views.my_reservations'))
 
 @views.route('/login', methods=['GET', 'POST'])
 def login():

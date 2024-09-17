@@ -36,7 +36,6 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
     
-    # Define the reverse relationship to Reservation
     reservations = db.relationship('Reservation', back_populates='user')
 
     def __repr__(self):

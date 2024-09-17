@@ -48,8 +48,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="hours">Duration (hours)</label>
-                                <input type="number" class="form-control" id="hours" name="hours" min="1" required>
-                            </div>
+                                <input type="number" class="form-control" id="hours" name="hours" min="1" value="1" required>
+                            </div>                            
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -65,10 +65,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Set the min attribute of the start_time input to the current date/time
         const startTimeInput = document.getElementById('start_time');
         const now = new Date();
-        const formattedNow = now.toISOString().slice(0,16); // Format as YYYY-MM-DDTHH:MM
+        const formattedNow = now.toISOString().slice(0,16);
         startTimeInput.setAttribute('min', formattedNow);
     });
 </script>
